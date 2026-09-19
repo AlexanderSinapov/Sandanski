@@ -156,7 +156,7 @@ export function createStreetView({ panoEl, fallbackEl, cardsEl, titleEl, tagEl, 
       const edge = document.createElement("div");
       edge.className = "edge";
       const lead = document.createElement("div");
-      lead.className = "lead";
+      lead.className = "leader";
       cardsEl.append(lead, el, edge);
 
       const img = el.querySelector("img");
@@ -277,7 +277,7 @@ export function createStreetView({ panoEl, fallbackEl, cardsEl, titleEl, tagEl, 
 
   function hide() {
     gsap.to(cardsEl.querySelectorAll(".card-inner"), { opacity: 0, z: -400, duration: 0.5, stagger: 0.05, ease: "power2.in" });
-    gsap.to(cardsEl.querySelectorAll(".edge, .lead"), { opacity: 0, duration: 0.3 });
+    gsap.to(cardsEl.querySelectorAll(".edge, .leader"), { opacity: 0, duration: 0.3 });
     gsap.to(titleEl.querySelectorAll(".ch"), { opacity: 0, rotateX: 90, duration: 0.5, stagger: 0.02 });
     return new Promise((r) => setTimeout(() => { active = false; r(); }, 600));
   }

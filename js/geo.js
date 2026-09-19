@@ -1,6 +1,8 @@
 // Converts lat/lng to 3D world units and samples real elevation.
-// assets/elevation.png = 4×4 Terrarium tiles (zoom 9, x 287–290, y 188–191) stitched together.
-// Terrarium encoding: metres = R*256 + G + B/256 - 32768
+// assets/elevation.bin = 1024×1024 heights in metres (Uint16, little-endian), decoded once from
+// 4×4 Terrarium tiles (zoom 9, x 287–290, y 188–191; metres = R*256 + G + B/256 - 32768).
+// Raw numbers instead of a PNG: phone browsers colour-correct images, which scrambled heights
+// hidden in the colours.
 
 export const BBOX = { w: 22.45, e: 24.05, s: 41.35, n: 42.85 };
 const LATC = 42.1, LNGC = 23.25;
@@ -22,18 +24,13 @@ function toPixel(lat, lng) {
 }
 
 export async function loadElevation(url) {
-  const img = new Image();
-  img.src = url;
-  await img.decode();
-  const c = document.createElement("canvas");
-  c.width = c.height = SIZE;
-  const ctx = c.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(img, 0, 0);
-  const d = ctx.getImageData(0, 0, SIZE, SIZE).data;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Could not load ${url} (${res.status})`);
+  const buf = await res.arrayBuffer();
+  // Uint16 little-endian; DataView keeps it correct on any device
+  const view = new DataView(buf);
   const h = new Float32Array(SIZE * SIZE);
-  for (let i = 0; i < h.length; i++) {
-    h[i] = Math.max(0, d[i * 4] * 256 + d[i * 4 + 1] + d[i * 4 + 2] / 256 - 32768);
-  }
+  for (let i = 0; i < h.length; i++) h[i] = view.getUint16(i * 2, true);
   const at = (x, y) =>
     h[Math.min(SIZE - 1, Math.max(0, y)) * SIZE + Math.min(SIZE - 1, Math.max(0, x))];
 

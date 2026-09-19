@@ -17,7 +17,7 @@ lenis.stop();
 
 // ── Boot ─────────────────────────────────────────────────────
 gsap.to("#loader .bar i", { scaleX: 0.6, duration: 1.2, ease: "power2.out" });
-const elev = await loadElevation("assets/elevation.png");
+const elev = await loadElevation("assets/elevation.bin");
 const world = createScene($("#scene"), elev);
 const { camera } = world;
 
@@ -30,7 +30,9 @@ $("#sv-fallback").innerHTML = `<div class="fb-grid"></div><p class="fb-msg"></p>
 // ── Camera keyframes for each scroll chapter ────────────────
 function keyframe(ch) {
   if (ch.overview) return { px: -3.2, py: 5.2, pz: 8.4, tx: 0, ty: 0, tz: 0.6 };
-  if (ch.top) return { px: 0.6, py: 11.5, pz: 2.9, tx: 0.6, ty: 0, tz: 0.35 };
+  if (ch.top) return innerWidth < innerHeight
+    ? { px: 0.6, py: 14.5, pz: 2.2, tx: 0.6, ty: 0, tz: -0.35 }   // portrait phone: zoom out, leave room for the text
+    : { px: 0.6, py: 11.5, pz: 2.9, tx: 0.6, ty: 0, tz: 0.35 };
   const w = toWorld(ch.lat, ch.lng), y = elev.height(ch.lat, ch.lng);
   return {
     px: w.x + Math.sin(ch.angle) * ch.dist, py: y + ch.height, pz: w.z + Math.cos(ch.angle) * ch.dist,

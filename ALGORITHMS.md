@@ -14,7 +14,7 @@ x_tile = (lng + 180) / 360 × 2^z
 y_tile = (1 − ln(tan φ + 1/cos φ) / π) / 2 × 2^z        (φ = latitude in radians)
 ```
 
-The `y` formula is the **Mercator projection**. It stretches the map vertically near the poles so that shapes stay correct. I used it once, while building the site, to see that zoom 9, tiles x = 287…290 and y = 188…191, covers South-West Bulgaria. Those 16 tiles were downloaded and stitched into one 1024×1024 image: `assets/elevation.png`.
+The `y` formula is the **Mercator projection**. It stretches the map vertically near the poles so that shapes stay correct. I used it once, while building the site, to see that zoom 9, tiles x = 287…290 and y = 188…191, covers South-West Bulgaria. Those 16 tiles were downloaded and stitched into one 1024×1024 image.
 
 ### 1.2 Terrarium decoding (colour → metres)
 The tiles don't store a picture. They store **heights hidden in the colour channels**. Each pixel's red, green and blue values are one number split into three bytes:
@@ -23,10 +23,16 @@ The tiles don't store a picture. They store **heights hidden in the colour chann
 height (m) = R × 256 + G + B / 256 − 32768
 ```
 
-`R×256 + G` gives whole metres (0–65535), `B/256` adds fractions of a metre, and `−32768` allows heights below sea level. The browser draws the PNG onto a hidden `<canvas>`, reads every pixel with `getImageData`, and decodes it into a `Float32Array` of about a million heights. See `loadElevation` in [js/geo.js](js/geo.js).
+`R×256 + G` gives whole metres (0–65535), `B/256` adds fractions of a metre, and `−32768` allows heights below sea level.
+
+This decoding is done **once, while building the site**, not in the browser. A small script reads the PNG's raw bytes itself: it unzips the pixel data (PNGs are compressed with *deflate*) and undoes PNG's per-row **filters**, where each byte is stored as a difference from its left or upper neighbour. It then applies the formula to every pixel and saves the million heights as plain numbers in `assets/elevation.bin` (2 bytes per height, *Uint16*, little-endian).
+
+**Why not decode the PNG in the browser?** The first version did: it drew the PNG on a hidden `<canvas>` and read the pixels back. On phones the terrain came out full of spikes. The PNG carried colour-profile tags (`sRGB`, `gAMA`), so phone browsers colour-corrected it, and some privacy features add random noise to canvas reads. For a normal photo that's invisible, but here a change of just 1 in the red channel means **256 m** of height. A raw number file can't be colour-corrected, so every device gets identical heights.
+
+In the browser, `loadElevation` in [js/geo.js](js/geo.js) downloads the file and reads it with a `DataView` (`getUint16(i × 2, true)`, where `true` means little-endian) into a `Float32Array`.
 
 ### 1.3 Latitude/longitude → pixel
-The same Mercator formula from 1.1 turns any lat/lng into an exact (fractional) pixel inside that image (`toPixel` in [js/geo.js](js/geo.js)).
+The same Mercator formula from 1.1 turns any lat/lng into an exact (fractional) position inside that 1024×1024 grid (`toPixel` in [js/geo.js](js/geo.js)).
 
 ### 1.4 Bilinear interpolation (heights between pixels)
 A coordinate usually lands *between* four pixels. Taking just the nearest one would make the terrain look like stairs. Bilinear interpolation blends the four neighbours by distance:
@@ -313,7 +319,7 @@ So one visit costs at most one billable Street View event, however many places a
 | # | Algorithm | Where | Used for |
 |---|---|---|---|
 | 1.1 | Web Mercator tile math | build step | picking elevation tiles |
-| 1.2 | Terrarium RGB decoding | `geo.js` | colour → metres |
+| 1.2 | Terrarium RGB decoding + PNG unfiltering | build step → `elevation.bin` | colour → metres, same on every device |
 | 1.4 | Bilinear interpolation | `geo.js` | smooth heights |
 | 2.1 | Equirectangular projection with cos(lat) | `geo.js` | lat/lng → 3D |
 | 2.2 | Grid triangulation | `scene.js` | terrain mesh |

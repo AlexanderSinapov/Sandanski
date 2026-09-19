@@ -89,7 +89,7 @@ js/geo.js           lat/lng → 3D coordinates, elevation sampling
 js/scene.js         three.js holographic terrain
 js/streetview.js    Street View + floating 3D cards
 js/main.js          scroll animation, pins, dive transition
-assets/elevation.png  real elevation (SRTM), Terrarium-encoded
+assets/elevation.bin  real elevation (SRTM): 1024×1024 heights in metres, Uint16
 ```
 
 ## Credits
