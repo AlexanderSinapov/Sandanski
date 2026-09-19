@@ -28,23 +28,43 @@ const sv = createStreetView({
 $("#sv-fallback").innerHTML = `<div class="fb-grid"></div><p class="fb-msg"></p>`;
 
 // ── Camera keyframes for each scroll chapter ────────────────
+// The scroll camera is described as an ORBIT around a target point: yaw (compass angle around it),
+// tilt (angle above the ground) and distance. Tweening these instead of x/y/z makes the camera swing
+// around the target. Straight x/y/z lines could pass directly above the target, where "look at it"
+// has no defined up direction and the view flips 180°.
+function orbit(p, t) {
+  const dx = p.x - t.x, dy = p.y - t.y, dz = p.z - t.z;
+  const flat = Math.hypot(dx, dz);
+  return { tx: t.x, ty: t.y, tz: t.z, yaw: Math.atan2(dx, dz), tilt: Math.atan2(dy, flat), dist: Math.hypot(flat, dy) };
+}
+function orbitToPosition(o, out) {
+  out.px = o.tx + Math.sin(o.yaw) * Math.cos(o.tilt) * o.dist;
+  out.py = o.ty + Math.sin(o.tilt) * o.dist;
+  out.pz = o.tz + Math.cos(o.yaw) * Math.cos(o.tilt) * o.dist;
+  out.tx = o.tx; out.ty = o.ty; out.tz = o.tz;
+  return out;
+}
 function keyframe(ch) {
-  if (ch.overview) return { px: -3.2, py: 5.2, pz: 8.4, tx: 0, ty: 0, tz: 0.6 };
+  if (ch.overview) return orbit({ x: -3.2, y: 5.2, z: 8.4 }, { x: 0, y: 0, z: 0.6 });
   if (ch.top) return innerWidth < innerHeight
-    ? { px: 0.6, py: 14.5, pz: 2.2, tx: 0.6, ty: 0, tz: -0.35 }   // portrait phone: zoom out, leave room for the text
-    : { px: 0.6, py: 11.5, pz: 2.9, tx: 0.6, ty: 0, tz: 0.35 };
+    ? orbit({ x: 0.6, y: 14.5, z: 2.2 }, { x: 0.6, y: 0, z: -0.35 })   // portrait phone: zoom out, leave room for the text
+    : orbit({ x: 0.6, y: 11.5, z: 2.9 }, { x: 0.6, y: 0, z: 0.35 });
   const w = toWorld(ch.lat, ch.lng), y = elev.height(ch.lat, ch.lng);
-  return {
-    px: w.x + Math.sin(ch.angle) * ch.dist, py: y + ch.height, pz: w.z + Math.cos(ch.angle) * ch.dist,
-    tx: w.x, ty: y, tz: w.z,
-  };
+  return orbit(
+    { x: w.x + Math.sin(ch.angle) * ch.dist, y: y + ch.height, z: w.z + Math.cos(ch.angle) * ch.dist },
+    { x: w.x, y, z: w.z });
 }
 const frames = CHAPTERS.map(keyframe);
+// Unwrap yaw so each step turns the short way round (e.g. 170° → −170° is a 20° turn, not 340°)
+for (let i = 1; i < frames.length; i++) {
+  while (frames[i].yaw - frames[i - 1].yaw > Math.PI) frames[i].yaw -= 2 * Math.PI;
+  while (frames[i].yaw - frames[i - 1].yaw < -Math.PI) frames[i].yaw += 2 * Math.PI;
+}
 const routeAt = CHAPTERS.map((ch, i) =>
   ch.overview ? 0 : ch.top || i === CHAPTERS.length - 2 ? 1 : world.routeT(ch.lat, ch.lng));
 
-const cam = { ...frames[0], route: 0 };     // driven by scroll
-const view = { ...frames[0] };              // what the camera actually shows (scroll or dive)
+const cam = { ...frames[0], route: 0 };     // orbit parameters driven by scroll
+const view = orbitToPosition(frames[0], {}); // camera position + target actually shown (scroll or dive)
 let mode = "scroll";
 const intro = { k: 1 };                     // 1 = camera far away (intro), 0 = normal
 
@@ -92,7 +112,7 @@ addEventListener("pointermove", (e) => {
 const clock = new THREE.Clock();
 gsap.ticker.add(() => {
   const t = clock.getElapsedTime();
-  if (mode === "scroll") Object.assign(view, cam);
+  if (mode === "scroll") orbitToPosition(cam, view);
   mouse.sx += (mouse.x - mouse.sx) * 0.05;
   mouse.sy += (mouse.y - mouse.sy) * 0.05;
   const par = mode === "scroll" ? 0.35 : 0;

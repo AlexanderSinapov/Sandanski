@@ -135,6 +135,24 @@ camera.y = target.y + height
 
 This converts **polar coordinates** to Cartesian ones, so the camera can orbit to any side of a place. `camera.lookAt(target)` builds the rotation that points the camera at it (`keyframe` in [js/main.js](js/main.js)).
 
+**Animating in orbit coordinates (why the view doesn't flip).** Between keyframes, the camera doesn't move in a straight x/y/z line. Every keyframe is stored as an **orbit**: target point, **yaw** (compass angle around the target), **tilt** (angle above the ground) and **distance**:
+
+```
+yaw  = atan2(dx, dz)        tilt = atan2(dy, √(dx² + dz²))        dist = √(dx² + dy² + dz²)
+```
+
+The animation tweens these numbers, and every frame converts them back into a position (spherical → Cartesian):
+
+```
+x = target.x + sin(yaw) · cos(tilt) · dist
+y = target.y + sin(tilt) · dist
+z = target.z + cos(yaw) · cos(tilt) · dist
+```
+
+The first version tweened x/y/z directly. From Sandanski (camera north of the town, looking south) to the final top view (camera south, looking north), the straight line passed **directly above** the target. Looking straight down, `lookAt` can't tell which way is "up", so the view snapped 180°. With orbit coordinates the camera swings around the target instead, and tilt never reaches 90°.
+
+Each yaw is also **unwrapped** against the previous one (±2π until the difference is under π), so the camera always turns the short way round.
+
 ### 5.2 Scroll → timeline (scrubbing)
 The whole flight is one GSAP **timeline**: keyframe 0 → 1 → 2 → … → 6, one second each. ScrollTrigger maps scroll position to time:
 
