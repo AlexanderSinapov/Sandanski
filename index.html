@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>София → Сандански · Пътешествие на юг</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <!-- Loader -->
+  <div id="loader"><div class="loader-inner"><span>Изграждаме планините</span><div class="bar"><i></i></div></div></div>
+
+  <!-- 3D terrain lives here, fixed behind everything -->
+  <canvas id="scene"></canvas>
+  <div id="pins"></div>
+  <div id="vignette"></div>
+
+  <!-- Scroll story -->
+  <main id="story">
+    <section class="chapter hero" data-chapter="0">
+      <p class="kicker">Пътешествие из Югозападна България</p>
+      <h1 class="title3d" data-text="СОФИЯ → САНДАНСКИ">СОФИЯ → САНДАНСКИ</h1>
+      <p class="lead">София · Благоевград · Мелник · Сандански</p>
+      <div class="scroll-hint"><span></span>Скролни, за да тръгнем</div>
+    </section>
+
+    <section class="chapter" data-chapter="1">
+      <div class="panel"><span class="num">01</span><h2>София</h2>
+        <p>Тръгваме от столицата, в подножието на Витоша. Нейният девиз: <em>„Расте, но не старее“</em>. Магистрала „Струма“ (А3) ни води на юг.</p></div>
+    </section>
+    <section class="chapter right" data-chapter="2">
+      <div class="panel"><span class="num">02</span><h2>Благоевград</h2>
+        <p>Първата спирка: оживен студентски град с два университета, между Рила и Пирин.</p></div>
+    </section>
+    <section class="chapter" data-chapter="3">
+      <div class="panel"><span class="num">По пътя</span><h2>Кресненско дефиле</h2>
+        <p>Струма си пробива път между Пирин и Малешевска планина. Щом излезеш от другата страна, въздухът става средиземноморски.</p></div>
+    </section>
+    <section class="chapter right" data-chapter="4">
+      <div class="panel"><span class="num">03</span><h2>Мелник</h2>
+        <p>Отбиваме се до най-малкия град в България, сгушен между пясъчни пирамиди и прочут с виното си.</p></div>
+    </section>
+    <section class="chapter" data-chapter="5">
+      <div class="panel"><span class="num">04</span><h2>Сандански</h2>
+        <p>Крайната цел! Минерални извори, мек климат и, според легендата, родното място на Спартак.</p></div>
+    </section>
+    <section class="chapter explore" data-chapter="6">
+      <h2 class="title3d small" data-text="ИЗСЛЕДВАЙ">ИЗСЛЕДВАЙ</h2>
+      <p class="lead">Натисни светеща точка на картата, за да се гмурнеш в Street View.</p>
+      <p class="credits">Релеф: <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">Terrain Tiles</a> (Mapzen / AWS Open Data, SRTM). Снимки: Уикипедия / Уикимедия Общомедия. Street View: Google.</p>
+    </section>
+  </main>
+
+  <!-- Street View experience -->
+  <div id="sv" aria-hidden="true">
+    <div id="sv-pano"></div>
+    <div id="sv-fallback" hidden></div>
+    <div id="sv-cards"></div>
+    <div id="sv-hud">
+      <div class="sv-heading">
+        <span class="sv-bg"></span>
+        <h2 class="sv-title"></h2>
+        <p class="sv-tag"></p>
+      </div>
+      <button id="sv-back" type="button">← Обратно към картата</button>
+    </div>
+  </div>
+  <div id="flash"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script src="js/config.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

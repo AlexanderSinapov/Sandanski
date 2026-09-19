@@ -1,0 +1,17 @@
+server {
+    listen ${PORT};
+    listen [::]:${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    # Cache assets for a day; always re-check the page and config so updates show up.
+    location ~* \.(png|jpg|jpeg|webp|css|js)$ { expires 1d; }
+    location = /js/config.js { add_header Cache-Control "no-cache"; }
+    location = /index.html   { add_header Cache-Control "no-cache"; }
+
+    location / { try_files $uri $uri/ /index.html; }
+}

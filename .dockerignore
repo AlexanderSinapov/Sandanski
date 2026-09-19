@@ -1,0 +1,6 @@
+.git
+.vscode
+*.md
+start.bat
+Dockerfile
+.dockerignore
